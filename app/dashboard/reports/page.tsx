@@ -1,30 +1,83 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { plans, reports, users } from '@/lib/sample-data'
 
-// Sample data
-const sampleReports = [
-  { id: 1, planName: 'Increase Student Enrollment', quarter: 'Q1 2023', completion: '30%', submissionDate: '2023-03-31' },
-  { id: 2, planName: 'Improve Research Output', quarter: 'Q1 2023', completion: '25%', submissionDate: '2023-03-31' },
-  { id: 3, planName: 'Enhance Campus Facilities', quarter: 'Q1 2023', completion: '40%', submissionDate: '2023-03-31' },
-]
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  accomplishmentValue: string;
+}
+
+interface Report {
+  id: string;
+  planId: string;
+  quarter: string;
+  completion: number;
+  notes: string;
+  submissionDate: string;
+  submittedBy: string;
+}
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState(sampleReports)
-  const [newReport, setNewReport] = useState({ planName: '', completion: '', notes: '' })
+  const [user, setUser] = useState<User | null>(null)
+  const [userPlans, setUserPlans] = useState<Plan[]>([])
+  const [userReports, setUserReports] = useState<Report[]>([])
+  const [selectedPlan, setSelectedPlan] = useState<string>('')
+  const [completion, setCompletion] = useState<number>(0)
+  const [notes, setNotes] = useState<string>('')
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const storedUser = localStorage.getItem('currentUser')
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser)
+      setUser(parsedUser)
+      const filteredPlans = plans.filter(plan => 
+        plan.createdBy === parsedUser.id || plan.assignedTo.includes(parsedUser.id)
+      )
+      setUserPlans(filteredPlans)
+      const filteredReports = reports.filter(report => report.submittedBy === parsedUser.id)
+      setUserReports(filteredReports)
+    } else {
+      router.push('/login')
+    }
+  }, [router])
+
+  const handleSubmitReport = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement report submission logic
-    console.log('Submitting report:', newReport)
-    // Reset form after submission
-    setNewReport({ planName: '', completion: '', notes: '' })
+    if (!selectedPlan) return
+
+    const newReport: Report = {
+      id: `R${reports.length + 1}`,
+      planId: selectedPlan,
+      quarter: `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`,
+      completion,
+      notes,
+      submissionDate: new Date().toISOString().split('T')[0],
+      submittedBy: user?.id || '',
+    }
+
+    setUserReports([...userReports, newReport])
+    setSelectedPlan('')
+    setCompletion(0)
+    setNotes('')
   }
+
+  if (!user) return null
 
   return (
     <div className="space-y-8">
@@ -32,15 +85,21 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-bold mb-4">Submit Quarterly Report</h1>
         <Card>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmitReport} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="planName" className="text-sm font-medium">Plan Name</label>
-                <Input
-                  id="planName"
-                  value={newReport.planName}
-                  onChange={(e) => setNewReport({ ...newReport, planName: e.target.value })}
+                <label htmlFor="planId" className="text-sm font-medium">Plan</label>
+                <select
+                  id="planId"
+                  value={selectedPlan}
+                  onChange={(e) => setSelectedPlan(e.target.value)}
+                  className="w-full p-2 border rounded"
                   required
-                />
+                >
+                  <option value="">Select a plan</option>
+                  {userPlans.map(plan => (
+                    <option key={plan.id} value={plan.id}>{plan.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <label htmlFor="completion" className="text-sm font-medium">Completion Percentage</label>
@@ -49,8 +108,8 @@ export default function ReportsPage() {
                   type="number"
                   min="0"
                   max="100"
-                  value={newReport.completion}
-                  onChange={(e) => setNewReport({ ...newReport, completion: e.target.value })}
+                  value={completion}
+                  onChange={(e) => setCompletion(Number(e.target.value))}
                   required
                 />
               </div>
@@ -58,8 +117,8 @@ export default function ReportsPage() {
                 <label htmlFor="notes" className="text-sm font-medium">Notes</label>
                 <Textarea
                   id="notes"
-                  value={newReport.notes}
-                  onChange={(e) => setNewReport({ ...newReport, notes: e.target.value })}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   required
                 />
               </div>
@@ -79,21 +138,20 @@ export default function ReportsPage() {
                   <TableHead>Quarter</TableHead>
                   <TableHead>Completion</TableHead>
                   <TableHead>Submission Date</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell>{report.planName}</TableCell>
-                    <TableCell>{report.quarter}</TableCell>
-                    <TableCell>{report.completion}</TableCell>
-                    <TableCell>{report.submissionDate}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">View</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {userReports.map((report) => {
+                  const plan = plans.find(p => p.id === report.planId)
+                  return (
+                    <TableRow key={report.id}>
+                      <TableCell>{plan ? plan.name : 'Unknown Plan'}</TableCell>
+                      <TableCell>{report.quarter}</TableCell>
+                      <TableCell>{`${report.completion}%`}</TableCell>
+                      <TableCell>{report.submissionDate}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </CardContent>

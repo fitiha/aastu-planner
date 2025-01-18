@@ -5,18 +5,27 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { users, pendingUsers } from '@/lib/sample-data'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement login logic
-    console.log('Login attempted with:', email, password)
-    // For now, we'll just redirect to a dashboard page
-    router.push('/dashboard')
+    const activeUser = users.find(u => u.email === email && u.password === password)
+    const pendingUser = pendingUsers.find(u => u.email === email && u.password === password)
+
+    if (activeUser) {
+      localStorage.setItem('currentUser', JSON.stringify(activeUser))
+      router.push('/dashboard')
+    } else if (pendingUser) {
+      router.push('/pending-approval')
+    } else {
+      setError('Invalid email or password')
+    }
   }
 
   return (
@@ -49,6 +58,7 @@ export default function LoginPage() {
                 required
               />
             </div>
+            {error && <p className="text-red-500">{error}</p>}
             <Button type="submit" className="w-full">Login</Button>
           </form>
         </CardContent>

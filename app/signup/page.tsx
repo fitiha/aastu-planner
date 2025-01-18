@@ -1,24 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { users } from '@/lib/sample-data'
 
 export default function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('')
-  const [superiorId, setSuperiorId] = useState('')
+  const [superior, setSuperior] = useState('')
+  const [availableSuperiors, setAvailableSuperiors] = useState<{id: string, name: string}[]>([])
   const router = useRouter()
+
+  useEffect(() => {
+    if (role) {
+      const superiors = users.filter(user => {
+        if (role === 'vice_president') return user.role === 'planning_office'
+        if (role === 'director') return user.role === 'vice_president'
+        if (role === 'team_lead') return user.role === 'director'
+        if (role === 'staff') return user.role === 'team_lead'
+        return false
+      }).map(user => ({ id: user.id, name: user.name }))
+      setAvailableSuperiors(superiors)
+    }
+  }, [role])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     // TODO: Implement signup logic
-    console.log('Signup attempted with:', { name, email, password, role, superiorId })
+    console.log('Signup attempted with:', { name, email, password, role, superior })
     // For now, we'll just redirect to a pending approval page
     router.push('/pending-approval')
   }
@@ -76,16 +91,21 @@ export default function SignupPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="superiorId" className="text-sm font-medium">Superior's ID</label>
-              <Input
-                id="superiorId"
-                value={superiorId}
-                onChange={(e) => setSuperiorId(e.target.value)}
-                placeholder="Enter your superior's unique ID"
-                required
-              />
-            </div>
+            {role && (
+              <div className="space-y-2">
+                <label htmlFor="superior" className="text-sm font-medium">Superior</label>
+                <Select onValueChange={setSuperior}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your superior" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSuperiors.map((sup) => (
+                      <SelectItem key={sup.id} value={sup.id}>{sup.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button type="submit" className="w-full">Sign Up</Button>
           </form>
         </CardContent>
