@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ReportCard } from '@/components/report-card'
 import { reports, plans } from '@/lib/sample-data'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Plus, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function MyReportsPage() {
   const router = useRouter()
@@ -59,59 +61,123 @@ export default function MyReportsPage() {
   const rejectedReports = userReports.filter(report => report.status === 'Rejected')
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-8 space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#2E2E31]">My Reports</h1>
-        <Button onClick={handleCreateReport}>Create New Report</Button>
+      <div className="flex items-center gap-3">
+        <img 
+        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
+        alt="AASTU Logo" 
+        className="h-32 w-auto rounded-full"
+        />
+        <h1 className="text-3xl font-bold text-[#1A237E] mx-12">My Reports</h1>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="bg-[#A38901] text-white">
-            <CardTitle>Pending Review</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
+      <Button 
+        onClick={handleCreateReport}
+        className="bg-[#C49B1D] hover:bg-[#B38A1C] text-white"
+      >
+        <Plus className="mr-2 h-4 w-4" /> Create New Report
+      </Button>
+      </div>
+
+      <Tabs defaultValue="pending" className="w-full">
+      <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+        <TabsTrigger 
+        value="pending" 
+        className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white"
+        >
+        <Clock className="mr-2 h-4 w-4" /> Pending ({pendingReports.length})
+        </TabsTrigger>
+        <TabsTrigger 
+        value="approved" 
+        className="data-[state=active]:bg-[#1A237E] data-[state=active]:text-white"
+        >
+        <CheckCircle className="mr-2 h-4 w-4" /> Approved ({approvedReports.length})
+        </TabsTrigger>
+        <TabsTrigger 
+        value="rejected" 
+        className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
+        >
+        <AlertCircle className="mr-2 h-4 w-4" /> Rejected ({rejectedReports.length})
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="pending">
+        <Card className="border-t-4 border-t-[#C49B1D]">
+        <CardHeader className="bg-gradient-to-r from-[#C49B1D] to-[#D4AB2D] text-white">
+          <CardTitle>Pending Review</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <ScrollArea className="h-[60vh]">
+          <div className="space-y-4">
             {pendingReports.map(report => (
-              <div key={report.id} className="mb-4 relative">
-                <ReportCard report={report} plan={userPlans.find(p => p.id === report.planId)} />
-                <div className="absolute top-2 right-2 flex space-x-2">
-                  <Button size="sm" variant="ghost" onClick={() => handleEditReport(report.id)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDeleteReport(report.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+            <div key={report.id} className="relative">
+              <ReportCard report={report} plan={userPlans.find(p => p.id === report.planId)} />
+              <div className="absolute top-2 right-2 flex space-x-2">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => handleEditReport(report.id)}
+                className="hover:bg-[#1A237E] hover:text-white"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => handleDeleteReport(report.id)}
+                className="hover:bg-red-600 hover:text-white"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
               </div>
+            </div>
             ))}
-          </CardContent>
+          </div>
+          </ScrollArea>
+        </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="bg-[#2E2E31] text-white">
-            <CardTitle>Approved</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
+      </TabsContent>
+
+      <TabsContent value="approved">
+        <Card className="border-t-4 border-t-[#1A237E]">
+        <CardHeader className="bg-gradient-to-r from-[#1A237E] to-[#2A337E] text-white">
+          <CardTitle>Approved</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <ScrollArea className="h-[60vh]">
+          <div className="space-y-4">
             {approvedReports.map(report => (
-              <ReportCard key={report.id} report={report} plan={userPlans.find(p => p.id === report.planId)} />
+            <ReportCard key={report.id} report={report} plan={userPlans.find(p => p.id === report.planId)} />
             ))}
-          </CardContent>
+          </div>
+          </ScrollArea>
+        </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="bg-red-600 text-white">
-            <CardTitle>Rejected</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
+      </TabsContent>
+
+      <TabsContent value="rejected">
+        <Card className="border-t-4 border-t-red-600">
+        <CardHeader className="bg-gradient-to-r from-red-600 to-red-500 text-white">
+          <CardTitle>Rejected</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <ScrollArea className="h-[60vh]">
+          <div className="space-y-4">
             {rejectedReports.map(report => (
-              <ReportCard 
-                key={report.id} 
-                report={report} 
-                plan={userPlans.find(p => p.id === report.planId)}
-                onEdit={handleEditReport2}
-                onResubmit={handleResubmitReport}
-              />
+            <ReportCard 
+              key={report.id} 
+              report={report} 
+              plan={userPlans.find(p => p.id === report.planId)}
+              onEdit={handleEditReport2}
+              onResubmit={handleResubmitReport}
+            />
             ))}
-          </CardContent>
+          </div>
+          </ScrollArea>
+        </CardContent>
         </Card>
-      </div>
+      </TabsContent>
+      </Tabs>
     </div>
   )
 }

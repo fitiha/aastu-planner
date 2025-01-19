@@ -108,7 +108,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {user.name}
           </Link>
           <p className="text-sm text-gray-400">{user.role}</p>
-          <button onClick={handleLogout} className="mt-2 text-sm text-red-400 hover:text-red-300">
+          <button onClick={handleLogout} className="my-4 text-sm bg-red-700 hover:bg-red-600 text-white px-16 py-2 rounded-xl">
             Logout
           </button>
         </div>

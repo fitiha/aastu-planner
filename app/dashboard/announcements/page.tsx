@@ -22,11 +22,20 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Announcements</h1>
+       <div className="flex items-center gap-3">
+          <img 
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
+            alt="AASTU Logo" 
+            className="h-32 w-auto rounded-full"
+
+          />
+          <h1 className="text-3xl font-bold text-[#1A237E]">Announcements</h1>
+        </div>
+      
       {announcements.map((announcement) => (
         <Card key={announcement.id}>
           <CardHeader>
-            <CardTitle>{announcement.title}</CardTitle>
+            <CardTitle className='text-[#1A237E]'>{announcement.title}</CardTitle>
           </CardHeader>
           <CardContent>
             <p>{announcement.content}</p>

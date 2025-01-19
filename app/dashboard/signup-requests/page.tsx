@@ -57,20 +57,29 @@ export default function SignupRequestsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Signup Requests</h1>
+      <div className="flex items-center gap-3">
+          <img 
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
+            alt="AASTU Logo" 
+            className="h-32 w-auto rounded-full"
+
+          />
+          <h1 className="text-3xl font-bold text-[#1A237E]">Signup Requests</h1>
+        </div>
+      
       <Card>
         <CardHeader>
-          <CardTitle>Pending Requests</CardTitle>
+          <CardTitle className='text-[#1A237E]'>Pending Requests</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Request Date</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className='text-[#1A237E]'>Name</TableHead>
+                <TableHead className='text-[#1A237E]'>Email</TableHead>
+                <TableHead className='text-[#1A237E]'>Role</TableHead>
+                <TableHead className='text-[#1A237E]'>Request Date</TableHead>
+                <TableHead className='text-[#1A237E]'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -83,7 +92,7 @@ export default function SignupRequestsPage() {
                     <TableCell>{pendingUser.role}</TableCell>
                     <TableCell>{request.requestDate}</TableCell>
                     <TableCell>
-                      <Button onClick={() => handleApprove(request.id)} className="mr-2">Approve</Button>
+                      <Button onClick={() => handleApprove(request.id)} className="mr-2 bg-[#1A237E] text-white">Approve</Button>
                       <Button onClick={() => handleDecline(request.id)} variant="destructive">Decline</Button>
                     </TableCell>
                   </TableRow>

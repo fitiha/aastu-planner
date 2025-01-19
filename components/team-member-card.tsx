@@ -1,44 +1,47 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { User, AlertCircle } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ClipboardList, User } from 'lucide-react'
 
 interface TeamMemberCardProps {
-  member: {
-    id: string
-    name: string
-    email: string
-    role: string
-    department: string
-  }
+  member: any
   pendingItems: number
   onClick: () => void
 }
 
 export function TeamMemberCard({ member, pendingItems, onClick }: TeamMemberCardProps) {
   return (
-    <Card 
-      className="cursor-pointer transition-all hover:shadow-lg border-[#A38901] hover:border-[#2E2E31]"
-      onClick={onClick}
-    >
-      <CardHeader className="bg-[#A38901] text-white p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <User className="h-8 w-8" />
+    <Card className="group hover:border-[#1A237E] transition-colors">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-full bg-[#1A237E] flex items-center justify-center text-white">
+              <User className="h-6 w-6" />
+            </div>
             <div>
-              <h3 className="font-bold">{member.name}</h3>
-              <p className="text-sm opacity-90">{member.role}</p>
+              <h3 className="font-semibold text-[#1A237E] group-hover:text-[#2A337E]">
+                {member.name}
+              </h3>
+              <p className="text-sm text-gray-500">{member.position}</p>
+              {pendingItems > 0 && (
+                <Badge 
+                  className="mt-2 bg-[#C49B1D] hover:bg-[#B38A1C]"
+                >
+                  <ClipboardList className="mr-1 h-3 w-3" />
+                  {pendingItems} Pending
+                </Badge>
+              )}
             </div>
           </div>
-          {pendingItems > 0 && (
-            <div className="flex items-center gap-1 bg-red-500 text-white px-2 py-1 rounded-full">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm font-bold">{pendingItems}</span>
-            </div>
-          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClick}
+            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1A237E] hover:text-white"
+          >
+            View
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <p className="text-sm text-gray-600 mb-2">{member.email}</p>
-        <p className="text-sm font-medium text-[#2E2E31]">{member.department}</p>
       </CardContent>
     </Card>
   )

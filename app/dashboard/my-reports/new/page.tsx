@@ -48,10 +48,13 @@ export default function NewReportPage() {
     const newReport = {
       id: `R${reports.length + 1}`,
       ...formData,
+      accomplishedValue: Number(formData.accomplishedValue),
       submissionDate: new Date().toISOString().split('T')[0],
       submittedBy: currentUser.id,
       status: 'Pending Review',
       quarter: getCurrentQuarter(),
+      completion: 0, // or any appropriate value
+      comments: '', // or any appropriate value
     }
     reports.push(newReport)
     router.push('/dashboard/my-reports')

@@ -45,17 +45,25 @@ export default function PillarsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">University Pillars</h1>
+      <div className="flex items-center gap-3">
+          <img 
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
+            alt="AASTU Logo" 
+            className="h-32 w-auto rounded-full"
+
+          />
+          <h1 className="text-3xl font-bold text-[#1A237E]">University Pillars</h1>
+        </div>
       <Card>
         <CardHeader>
-          <CardTitle>Strategic Pillars</CardTitle>
+          <CardTitle className='text-[#1A237E]'>Strategic Pillars</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead className='text-[#1A237E]'>ID</TableHead>
+                <TableHead className='text-[#1A237E]'>Title</TableHead>
                 {currentUser?.role === 'planning_office' && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
