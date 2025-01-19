@@ -30,6 +30,53 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     router.push('/login')
   }
 
+  const roleBasedLinks = () => {
+    if (!user) return null;
+
+    switch (user.role) {
+      case 'planning_office':
+        return (
+          <>
+            <Link href="/dashboard/university-plans" className="block py-2 px-4 rounded hover:bg-gray-700">
+              University Plans
+            </Link>
+            <Link href="/dashboard/vp-reports" className="block py-2 px-4 rounded hover:bg-gray-700">
+              VP Reports
+            </Link>
+          </>
+        )
+      case 'vice_president':
+      case 'director':
+      case 'team_lead':
+        return (
+          <>
+            <Link href="/dashboard/my-plans" className="block py-2 px-4 rounded hover:bg-gray-700">
+              My Plans
+            </Link>
+            <Link href="/dashboard/my-reports" className="block py-2 px-4 rounded hover:bg-gray-700">
+              My Reports
+            </Link>
+            <Link href="/dashboard/my-team" className="block py-2 px-4 rounded hover:bg-gray-700">
+              My Team
+            </Link>
+          </>
+        )
+      case 'staff':
+        return (
+          <>
+            <Link href="/dashboard/my-plans" className="block py-2 px-4 rounded hover:bg-gray-700">
+              My Plans
+            </Link>
+            <Link href="/dashboard/my-reports" className="block py-2 px-4 rounded hover:bg-gray-700">
+              My Reports
+            </Link>
+          </>
+        )
+      default:
+        return null
+    }
+  }
+
   if (!user) {
     return null;
   }
@@ -43,24 +90,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <Link href="/dashboard" className="block py-2 px-4 rounded hover:bg-gray-700">
             Dashboard
           </Link>
-          <Link href="/dashboard/plans" className="block py-2 px-4 rounded hover:bg-gray-700">
-            Plans
-          </Link>
-          <Link href="/dashboard/reports" className="block py-2 px-4 rounded hover:bg-gray-700">
-            Reports
-          </Link>
+          {roleBasedLinks()}
           <Link href="/dashboard/pillars" className="block py-2 px-4 rounded hover:bg-gray-700">
             University Pillars
           </Link>
           <Link href="/dashboard/announcements" className="block py-2 px-4 rounded hover:bg-gray-700">
             Announcements
           </Link>
-          {user.role !== 'staff' && (
-            <Link href="/dashboard/team" className="block py-2 px-4 rounded hover:bg-gray-700">
-              Team
-            </Link>
-          )}
-          {user.role !== 'staff' && (
+          {user && user.role !== 'staff' && (
             <Link href="/dashboard/signup-requests" className="block py-2 px-4 rounded hover:bg-gray-700">
               Signup Requests
             </Link>

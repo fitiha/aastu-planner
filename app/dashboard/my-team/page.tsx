@@ -2,24 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { TeamMemberCard } from '@/components/team-member-card'
-import { users } from '@/lib/sample-data'
+import { users, plans, reports } from '@/lib/sample-data'
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  department: string
-  superior?: string
-  subordinates?: string[]
-}
-
-export default function TeamPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [teamMembers, setTeamMembers] = useState<User[]>([])
+export default function MyTeamPage() {
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [teamMembers, setTeamMembers] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -28,7 +18,7 @@ export default function TeamPage() {
       const parsedUser = JSON.parse(storedUser)
       setCurrentUser(parsedUser)
       if (parsedUser.role !== 'staff') {
-        const subordinates = users.filter(u => parsedUser.subordinates?.includes(u.id))
+        const subordinates = users.filter(u => u.superior === parsedUser.id)
         setTeamMembers(subordinates)
       } else {
         router.push('/dashboard')
@@ -38,29 +28,26 @@ export default function TeamPage() {
     }
   }, [router])
 
+  const getPendingItemsCount = (memberId: string) => {
+    const pendingPlans = plans.filter(p => p.createdBy === memberId && p.status === 'Pending Review').length
+    const pendingReports = reports.filter(r => r.submittedBy === memberId && r.status === 'Pending Review').length
+    return pendingPlans + pendingReports
+  }
+
   if (!currentUser || currentUser.role === 'staff') {
     return null
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#2E2E31]">Team Management</h1>
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-x33PChvxQsoH9fZvg3zlmVU3yb32Cw.png"
-          alt="AASTU Logo"
-          width={100}
-          height={40}
-          className="object-contain"
-        />
-      </div>
-
+      <h1 className="text-2xl font-bold text-[#2E2E31]">My Team</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teamMembers.map((member) => (
           <TeamMemberCard
             key={member.id}
             member={member}
-            onClick={() => router.push(`/dashboard/team/${member.id}/plans`)}
+            pendingItems={getPendingItemsCount(member.id)}
+            onClick={() => router.push(`/dashboard/my-team/${member.id}`)}
           />
         ))}
       </div>

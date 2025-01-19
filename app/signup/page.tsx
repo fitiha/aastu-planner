@@ -17,6 +17,10 @@ export default function SignupPage() {
   const [availableSuperiors, setAvailableSuperiors] = useState<{id: string, name: string}[]>([])
   const router = useRouter()
 
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [signupRequests, setSignupRequests] = useState([]);
+
+
   useEffect(() => {
     if (role) {
       const superiors = users.filter(user => {
@@ -32,9 +36,29 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement signup logic
-    console.log('Signup attempted with:', { name, email, password, role, superior })
-    // For now, we'll just redirect to a pending approval page
+    // Create a new pending user
+    const newUser = {
+      id: `PU${pendingUsers.length + 1}`,
+      name,
+      email,
+      role,
+      password, // In a real app, this should be hashed
+      superior,
+      status: 'pending'
+    }
+    setPendingUsers([...pendingUsers, newUser]);
+
+    // Create a signup request
+    const newRequest = {
+      id: `SR${signupRequests.length + 1}`,
+      userId: newUser.id,
+      superiorId: superior,
+      requestDate: new Date().toISOString().split('T')[0]
+    }
+    setSignupRequests([...signupRequests, newRequest]);
+
+    // TODO: Send email notification to superior
+
     router.push('/pending-approval')
   }
 
