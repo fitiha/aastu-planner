@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { plans, users, pillars } from "@/lib/sample-data"
 
-export default function NewPlanPage() {
+export default function EditPlanPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [superiorPlans, setSuperiorPlans] = useState<any[]>([])
@@ -35,10 +35,22 @@ export default function NewPlanPage() {
         const superiorPlans = plans.filter((p) => p.createdBy === superior.id && p.status === "Approved")
         setSuperiorPlans(superiorPlans)
       }
+
+      // Fetch the plan to edit
+      const storedNewPlans = localStorage.getItem("newPlans")
+      if (storedNewPlans) {
+        const newPlans = JSON.parse(storedNewPlans)
+        const planToEdit = newPlans.find((plan: any) => plan.id === params.id)
+        if (planToEdit) {
+          setFormData(planToEdit)
+        } else {
+          router.push("/dashboard/my-plans")
+        }
+      }
     } else {
       router.push("/login")
     }
-  }, [router])
+  }, [router, params.id])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -51,17 +63,12 @@ export default function NewPlanPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const newPlan = {
-      id: `P${Date.now()}`,
-      ...formData,
-      createdBy: currentUser.id,
-      targetValue: 100,
-      currentValue: 0,
-    }
     const storedNewPlans = localStorage.getItem("newPlans")
-    const newPlans = storedNewPlans ? JSON.parse(storedNewPlans) : []
-    newPlans.push(newPlan)
-    localStorage.setItem("newPlans", JSON.stringify(newPlans))
+    if (storedNewPlans) {
+      const newPlans = JSON.parse(storedNewPlans)
+      const updatedPlans = newPlans.map((plan: any) => (plan.id === params.id ? { ...plan, ...formData } : plan))
+      localStorage.setItem("newPlans", JSON.stringify(updatedPlans))
+    }
     router.push("/dashboard/my-plans")
   }
 
@@ -70,7 +77,7 @@ export default function NewPlanPage() {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Create New Plan</CardTitle>
+        <CardTitle>Edit Plan</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -90,7 +97,12 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="pillarId">Aligned Pillar</label>
-            <Select name="pillarId" onValueChange={(value) => handleSelectChange("pillarId", value)} required>
+            <Select
+              name="pillarId"
+              onValueChange={(value) => handleSelectChange("pillarId", value)}
+              value={formData.pillarId}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a pillar" />
               </SelectTrigger>
@@ -105,7 +117,12 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="alignedPlanId">Aligned Superior Plan</label>
-            <Select name="alignedPlanId" onValueChange={(value) => handleSelectChange("alignedPlanId", value)} required>
+            <Select
+              name="alignedPlanId"
+              onValueChange={(value) => handleSelectChange("alignedPlanId", value)}
+              value={formData.alignedPlanId}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a superior plan" />
               </SelectTrigger>
@@ -130,7 +147,12 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="targetQuarter">Planned Quarter for Implementation</label>
-            <Select name="targetQuarter" onValueChange={(value) => handleSelectChange("targetQuarter", value)} required>
+            <Select
+              name="targetQuarter"
+              onValueChange={(value) => handleSelectChange("targetQuarter", value)}
+              value={formData.targetQuarter}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a quarter" />
               </SelectTrigger>
@@ -166,7 +188,12 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="planType">Plan Type</label>
-            <Select name="planType" onValueChange={(value) => handleSelectChange("planType", value)} required>
+            <Select
+              name="planType"
+              onValueChange={(value) => handleSelectChange("planType", value)}
+              value={formData.planType}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select plan type" />
               </SelectTrigger>
@@ -177,7 +204,7 @@ export default function NewPlanPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit">Save Plan</Button>
+          <Button type="submit">Update Plan</Button>
         </form>
       </CardContent>
     </Card>

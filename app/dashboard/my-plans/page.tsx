@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlanCard } from '@/components/plan-card'
-import { plans } from '@/lib/sample-data'
-import { Plus, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { PlanCard } from "@/components/plan-card"
+import { plans } from "@/lib/sample-data"
+import { Plus, AlertCircle, CheckCircle, Clock, Edit, Send } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
@@ -14,82 +14,116 @@ export default function MyPlansPage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [userPlans, setUserPlans] = useState<any[]>([])
+  const [newPlans, setNewPlans] = useState<any[]>([])
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser')
+    const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser)
       setCurrentUser(parsedUser)
-      const filteredPlans = plans.filter(plan => plan.createdBy === parsedUser.id)
+      const filteredPlans = plans.filter((plan) => plan.createdBy === parsedUser.id)
       setUserPlans(filteredPlans)
+      const storedNewPlans = localStorage.getItem("newPlans")
+      if (storedNewPlans) {
+        setNewPlans(JSON.parse(storedNewPlans))
+      }
     } else {
-      router.push('/login')
+      router.push("/login")
     }
   }, [router])
 
   const handleCreatePlan = () => {
-    router.push('/dashboard/my-plans/new')
+    router.push("/dashboard/my-plans/new")
   }
 
   const handleEditPlan = (planId: string, updatedPlan: any) => {
-    setUserPlans(userPlans.map(plan => 
-      plan.id === planId ? { ...plan, ...updatedPlan } : plan
-    ))
+    setUserPlans(userPlans.map((plan) => (plan.id === planId ? { ...plan, ...updatedPlan } : plan)))
   }
 
   const handleResubmitPlan = (planId: string) => {
-    setUserPlans(userPlans.map(plan => 
-      plan.id === planId ? { ...plan, status: 'Pending Review' } : plan
-    ))
+    setUserPlans(userPlans.map((plan) => (plan.id === planId ? { ...plan, status: "Pending Review" } : plan)))
+  }
+
+  const handleEditNewPlan = (planId: string) => {
+    router.push(`/dashboard/my-plans/edit/${planId}`)
+  }
+
+  const handleSendNewPlan = (planId: string) => {
+    const planToSend = newPlans.find((plan) => plan.id === planId)
+    if (planToSend) {
+      setUserPlans([...userPlans, { ...planToSend, status: "Pending Review" }])
+      setNewPlans(newPlans.filter((plan) => plan.id !== planId))
+      localStorage.setItem("newPlans", JSON.stringify(newPlans.filter((plan) => plan.id !== planId)))
+    }
   }
 
   if (!currentUser) return null
 
-  const pendingPlans = userPlans.filter(plan => plan.status === 'Pending Review')
-  const approvedPlans = userPlans.filter(plan => plan.status === 'Approved')
-  const rejectedPlans = userPlans.filter(plan => plan.status === 'Rejected')
+  const pendingPlans = userPlans.filter((plan) => plan.status === "Pending Review")
+  const approvedPlans = userPlans.filter((plan) => plan.status === "Approved")
+  const rejectedPlans = userPlans.filter((plan) => plan.status === "Rejected")
 
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <img 
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
-            alt="AASTU Logo" 
+          <img
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg"
+            alt="AASTU Logo"
             className="h-32 w-auto rounded-full"
-
           />
           <h1 className="text-3xl font-bold text-[#1A237E]">My Plans</h1>
         </div>
-        <Button 
-          onClick={handleCreatePlan}
-          className="bg-[#C49B1D] hover:bg-[#B38A1C] text-white"
-        >
+        <Button onClick={handleCreatePlan} className="bg-[#C49B1D] hover:bg-[#B38A1C] text-white">
           <Plus className="mr-2 h-4 w-4" /> Create New Plan
         </Button>
       </div>
 
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-100">
-          <TabsTrigger 
-            value="pending" 
-            className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white"
-          >
+      <Tabs defaultValue="your-plans" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100">
+          <TabsTrigger value="your-plans" className="data-[state=active]:bg-gray-500 data-[state=active]:text-white">
+            <Edit className="mr-2 h-4 w-4" /> Your Plans ({newPlans.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending" className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white">
             <Clock className="mr-2 h-4 w-4" /> Pending ({pendingPlans.length})
           </TabsTrigger>
-          <TabsTrigger 
-            value="approved" 
-            className="data-[state=active]:bg-[#1A237E] data-[state=active]:text-white"
-          >
+          <TabsTrigger value="approved" className="data-[state=active]:bg-[#1A237E] data-[state=active]:text-white">
             <CheckCircle className="mr-2 h-4 w-4" /> Approved ({approvedPlans.length})
           </TabsTrigger>
-          <TabsTrigger 
-            value="rejected" 
-            className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
             <AlertCircle className="mr-2 h-4 w-4" /> Rejected ({rejectedPlans.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="your-plans">
+          <Card className="border-t-4 border-t-gray-500">
+            <CardHeader className="bg-gray-500  text-white">
+              <CardTitle>Your Plans</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ScrollArea className="h-[60vh]">
+                <div className="space-y-4">
+                  {newPlans.map((plan) => (
+                    <div key={plan.id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
+                      <div>
+                        <h3 className="font-semibold">{plan.name}</h3>
+                        <p className="text-sm text-gray-500">{plan.description}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button onClick={() => handleEditNewPlan(plan.id)} variant="outline" size="sm">
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                        <Button onClick={() => handleSendNewPlan(plan.id)} variant="default" size="sm">
+                          <Send className="mr-2 h-4 w-4" /> Send
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="pending">
           <Card className="border-t-4 border-t-[#C49B1D]">
@@ -99,7 +133,7 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {pendingPlans.map(plan => (
+                  {pendingPlans.map((plan) => (
                     <PlanCard key={plan.id} plan={plan} />
                   ))}
                 </div>
@@ -116,7 +150,7 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {approvedPlans.map(plan => (
+                  {approvedPlans.map((plan) => (
                     <PlanCard key={plan.id} plan={plan} />
                   ))}
                 </div>
@@ -133,13 +167,8 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {rejectedPlans.map(plan => (
-                    <PlanCard 
-                      key={plan.id} 
-                      plan={plan} 
-                      onEdit={handleEditPlan}
-                      onResubmit={handleResubmitPlan}
-                    />
+                  {rejectedPlans.map((plan) => (
+                    <PlanCard key={plan.id} plan={plan} onEdit={handleEditPlan} onResubmit={handleResubmitPlan} />
                   ))}
                 </div>
               </ScrollArea>
