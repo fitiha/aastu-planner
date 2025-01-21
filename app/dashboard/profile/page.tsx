@@ -9,7 +9,7 @@ import { User, Mail, Lock } from 'lucide-react'
 
 interface User {
   id: string;
-  name: string;
+  first_name: string;
   email: string;
   role: string;
   photoUrl?: string; // Optional field for profile photo
@@ -27,7 +27,7 @@ export default function ProfilePage() {
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser)
       setUser(parsedUser)
-      setName(parsedUser.name)
+      setName(parsedUser.first_name)
       setEmail(parsedUser.email)
     } else {
       router.push('/login')

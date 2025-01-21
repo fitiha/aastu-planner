@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { users } from '@/lib/sample-data'
 
 export default function SignupPage() {
   const [name, setName] = useState('')
@@ -17,49 +16,45 @@ export default function SignupPage() {
   const [availableSuperiors, setAvailableSuperiors] = useState<{id: string, name: string}[]>([])
   const router = useRouter()
 
-  const [pendingUsers, setPendingUsers] = useState([]);
-  const [signupRequests, setSignupRequests] = useState([]);
-
-
   useEffect(() => {
-    if (role) {
-      const superiors = users.filter(user => {
-        if (role === 'vice_president') return user.role === 'planning_office'
-        if (role === 'director') return user.role === 'vice_president'
-        if (role === 'team_lead') return user.role === 'director'
-        if (role === 'staff') return user.role === 'team_lead'
-        return false
-      }).map(user => ({ id: user.id, name: user.name }))
-      setAvailableSuperiors(superiors)
+    const fetchSuperiors = async () => {
+      if (role) {
+        const response = await fetch(`https://planning-server-ui10.onrender.com/hierarchy?role=${role}`)
+        const data = await response.json()
+        const superiors = data.superiors.map((sup: any) => ({ id: sup._id, name: sup.full_name }))
+        setAvailableSuperiors(superiors)
+      }
     }
+    fetchSuperiors()
   }, [role])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Create a new pending user
-    const newUser = {
-      id: `PU${pendingUsers.length + 1}`,
-      name,
-      email,
-      role,
-      password, // In a real app, this should be hashed
-      superior,
-      status: 'pending'
+
+    try {
+      const response = await fetch('https://planning-server-ui10.onrender.com/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: name,
+          email,
+          password,
+          role,
+          to_whom: superior,
+          full_name: name,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Signup failed')
+      }
+
+      router.push('/pending-approval')
+    } catch (error) {
+      console.error(error)
     }
-    setPendingUsers([...pendingUsers, newUser]);
-
-    // Create a signup request
-    const newRequest = {
-      id: `SR${signupRequests.length + 1}`,
-      userId: newUser.id,
-      superiorId: superior,
-      requestDate: new Date().toISOString().split('T')[0]
-    }
-    setSignupRequests([...signupRequests, newRequest]);
-
-    // TODO: Send email notification to superior
-
-    router.push('/pending-approval')
   }
 
   return (
@@ -143,4 +138,3 @@ export default function SignupPage() {
     </div>
   )
 }
-
