@@ -8,6 +8,13 @@ import { TeamMemberCard } from '@/components/team-member-card'
 import { users, plans, reports } from '@/lib/sample-data'
 import { Users, UserPlus, ClipboardList, FileText } from 'lucide-react'
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { motion } from "framer-motion"
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 },
+}
 
 export default function MyTeamPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -61,19 +68,20 @@ export default function MyTeamPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <div className="flex items-center gap-3">
-        <img 
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
-          alt="AASTU Logo" 
-          className="h-32 w-auto rounded-full"
-
-        />
-        <h1 className="text-3xl font-bold text-[#1A237E]">My Team</h1>
-      </div>
+    <div className="container rounded-xl mx-auto py-8 flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-blue-100 to-white transition-all duration-300 ease-in-out">
+    <motion.div
+      className="flex items-center gap-3 mb-6"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.h1 className="text-3xl font-bold text-[#1A237E] px-4" {...fadeInUp}>
+        My Teams
+      </motion.h1>
+    </motion.div>
 
       {/* Team Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
         <Card className="bg-gradient-to-br from-[#1A237E] to-[#2A337E] text-white">
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-full bg-white/10 p-3">

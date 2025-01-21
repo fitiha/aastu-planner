@@ -6,11 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ReportReviewCard } from '@/components/report-review-card'
 import { reports, plans, users } from '@/lib/sample-data'
+import { motion } from "framer-motion"
 
 export default function VPReportsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [vpReports, setVPReports] = useState<any[]>([])
   const router = useRouter()
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5 },
+  }
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser')
@@ -49,8 +56,17 @@ export default function VPReportsPage() {
   const reviewedReports = vpReports.filter(report => report.status !== 'Pending Review')
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#2E2E31]">VP Reports</h1>
+   <div className="container rounded-xl mx-auto py-8 flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-blue-100 to-white transition-all duration-300 ease-in-out">
+         <motion.div
+           className="flex items-center gap-3 mb-6"
+           initial={{ opacity: 0, y: -20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.5 }}
+         >
+           <motion.h1 className="text-3xl font-bold text-[#1A237E] px-4" {...fadeInUp}>
+            VP Reports
+           </motion.h1>
+         </motion.div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="bg-[#A38901] text-white">

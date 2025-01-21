@@ -134,21 +134,14 @@ export default function AnnouncementsPage() {
   
 
   return (
-    <div className="container mx-auto py-8 flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-blue-100 to-white transition-all duration-300 ease-in-out">
+    <div className="container rounded-xl mx-auto py-8 flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-blue-100 to-white transition-all duration-300 ease-in-out">
       <motion.div
         className="flex items-center gap-3 mb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.img
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg"
-          alt="AASTU Logo"
-          className="h-32 w-auto rounded-full mx-3"
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
-        />
-        <motion.h1 className="text-3xl font-bold text-[#1A237E]" {...fadeInUp}>
+        <motion.h1 className="text-3xl font-bold text-[#1A237E] px-4" {...fadeInUp}>
           Announcements
         </motion.h1>
       </motion.div>

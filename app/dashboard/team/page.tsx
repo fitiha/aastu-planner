@@ -6,6 +6,13 @@ import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TeamMemberCard } from '@/components/team-member-card'
 import { users } from '@/lib/sample-data'
+import { motion } from "framer-motion"
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 },
+}
 
 interface User {
   id: string
@@ -43,17 +50,17 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#2E2E31]">Team Management</h1>
-        <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-x33PChvxQsoH9fZvg3zlmVU3yb32Cw.png"
-          alt="AASTU Logo"
-          width={100}
-          height={40}
-          className="object-contain"
-        />
-      </div>
+     <div className="container rounded-xl mx-auto py-8 flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-b from-blue-100 to-white transition-all duration-300 ease-in-out">
+          <motion.div
+            className="flex items-center gap-3 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.h1 className="text-3xl font-bold text-[#1A237E] px-4" {...fadeInUp}>
+              Team Managment
+            </motion.h1>
+          </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teamMembers.map((member) => (

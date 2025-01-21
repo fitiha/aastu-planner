@@ -1,155 +1,104 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from "recharts"
-import { plans, reports, users } from '@/lib/sample-data'
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+import { Progress } from "@/components/ui/progress"
+import { PlanStatusChart } from "./components/plan-status-chart"
+import { ReportSubmissionChart } from "./components/report-submission-chart"
+import { UniversityProgressChart } from "./components/university-progress-chart"
+import { PlanReportTable } from "./components/plan-report-table"
 
 export default function DashboardPage() {
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [userPlans, setUserPlans] = useState<any[]>([])
-  const [userReports, setUserReports] = useState<any[]>([])
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser')
-    if (storedUser) {
-      const user = JSON.parse(storedUser)
-      setCurrentUser(user)
-      
-      // Filter plans and reports for the current user
-      const filteredPlans = plans.filter(plan => plan.createdBy === user.id || plan.assignedTo.includes(user.id))
-      setUserPlans(filteredPlans)
-      
-      const filteredReports = reports.filter(report => {
-        const reportPlan = filteredPlans.find(plan => plan.id === report.planId)
-        return reportPlan && (reportPlan.createdBy === user.id || reportPlan.assignedTo.includes(user.id))
-      })
-      setUserReports(filteredReports)
-    }
-  }, [])
-
-  const activePlans = userPlans.filter(plan => plan.status === 'In Progress').length
-  const completedReports = userReports.length
-
-  const planStatusData = [
-    { name: 'Not Started', value: userPlans.filter(plan => plan.status === 'Not Started').length },
-    { name: 'In Progress', value: userPlans.filter(plan => plan.status === 'In Progress').length },
-    { name: 'Completed', value: userPlans.filter(plan => plan.status === 'Completed').length },
-  ]
-
-  const planProgressData = userPlans.map(plan => ({
-    name: plan.name,
-    progress: Math.round((plan.currentValue / plan.targetValue) * 100)
-  }))
-
-  const quarterlyReportData = [
-    { name: 'Q1', reports: userReports.filter(report => report.quarter.startsWith('Q1')).length },
-    { name: 'Q2', reports: userReports.filter(report => report.quarter.startsWith('Q2')).length },
-    { name: 'Q3', reports: userReports.filter(report => report.quarter.startsWith('Q3')).length },
-    { name: 'Q4', reports: userReports.filter(report => report.quarter.startsWith('Q4')).length },
-  ]
+  // This data would typically come from an API or database
+  const dashboardData = {
+    totalPlans: 120,
+    completedReports: 87,
+    overallProgress: 72,
+    planStatusDistribution: [
+      { name: "Completed", value: 60 },
+      { name: "In Progress", value: 45 },
+      { name: "Not Started", value: 15 },
+    ],
+    quarterlyReportStatus: [
+      { name: "Q1", submitted: 30, pending: 0 },
+      { name: "Q2", submitted: 25, pending: 5 },
+      { name: "Q3", submitted: 20, pending: 10 },
+      { name: "Q4", submitted: 12, pending: 18 },
+    ],
+    universityProgress: [
+      { name: "Faculty A", progress: 85 },
+      { name: "Faculty B", progress: 70 },
+      { name: "Faculty C", progress: 60 },
+      { name: "Faculty D", progress: 75 },
+      { name: "Faculty E", progress: 90 },
+    ],
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Welcome, {currentUser?.full_name}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Welcome to Yor Dashboard</h1>
+
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Active Plans</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Plans</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-blue-600">{activePlans}</p>
+            <div className="text-2xl font-bold">{dashboardData.totalPlans}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Completed Reports</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed Reports</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-green-600">{completedReports}</p>
+            <div className="text-2xl font-bold">{dashboardData.completedReports}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Overall Progress</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overall Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold text-purple-600">
-              {userPlans.length > 0
-                ? Math.round(
-                    (userPlans.reduce((sum, plan) => sum + (plan.currentValue / plan.targetValue), 0) /
-                      userPlans.length) *
-                      100
-                  )
-                : 0}
-              %
-            </p>
+            <div className="text-2xl font-bold">{dashboardData.overallProgress}%</div>
+            <Progress value={dashboardData.overallProgress} className="mt-2" />
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
         <Card>
           <CardHeader>
             <CardTitle>Plan Status Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={planStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {planStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <PlanStatusChart data={dashboardData.planStatusDistribution} />
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Quarterly Report Submission</CardTitle>
+            <CardTitle>Quarterly Report Submission Status</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={quarterlyReportData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="reports" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <ReportSubmissionChart data={dashboardData.quarterlyReportStatus} />
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>University Plan Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UniversityProgressChart data={dashboardData.universityProgress} />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>Plan Progress</CardTitle>
+          <CardTitle>Detailed Plan and Report Information</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={planProgressData} layout="vertical">
-              <XAxis type="number" domain={[0, 100]} />
-              <YAxis type="category" dataKey="name" width={150} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="progress" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
+        <CardContent>
+          <PlanReportTable />
         </CardContent>
       </Card>
     </div>
   )
 }
-
