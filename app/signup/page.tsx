@@ -22,7 +22,7 @@ export default function SignupPage() {
         const response = await fetch(`https://planning-server-ui10.onrender.com/hierarchy?role=${role}`)
         const data = await response.json()
         const superiors = data.superiors.map((sup: any) => ({ id: sup._id, name: sup.full_name }))
-        console.log(superiors)
+        console.log(data)
         setAvailableSuperiors(superiors)
       }
     }

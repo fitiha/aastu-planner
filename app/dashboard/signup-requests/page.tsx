@@ -13,13 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface SignupRequest {
-  id: string;
-  userId: string;
-  superiorId: string;
-  requestDate: string;
-}
-
 interface PendingUser {
   _id: string;
   full_name: string;
@@ -32,15 +25,22 @@ interface PendingUser {
 export default function SignupRequestsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [requests, setRequests] = useState<PendingUser[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const fetchRequests = async () => {
+      setLoading(true);
+      setError(null);
+
       const storedUser = localStorage.getItem("currentUser");
       const token = localStorage.getItem("token");
+
       if (storedUser && token) {
         const parsedUser = JSON.parse(storedUser);
         setCurrentUser(parsedUser);
+
         try {
           const response = await fetch(
             "https://planning-server-ui10.onrender.com/users/unverified",
@@ -50,16 +50,26 @@ export default function SignupRequestsPage() {
               },
             }
           );
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+          }
+
           const data = await response.json();
-          setRequests(data.length ? data : []);
+
+          setRequests(data && Array.isArray(data) ? data : []);
         } catch (error) {
           console.error("Failed to fetch requests:", error);
+          setError(error instanceof Error ? error.message : "Unknown error");
           setRequests([]);
+        } finally {
+          setLoading(false);
         }
       } else {
         router.push("/login");
       }
     };
+
     fetchRequests();
   }, [router]);
 
@@ -135,9 +145,11 @@ export default function SignupRequestsPage() {
           <CardTitle className="text-[#1A237E]">Pending Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          {requests === null ? (
+          {loading ? (
             <p>Loading...</p>
-          ) : requests.length === 0 ? (
+          ) : error ? (
+            <p className="text-red-500">Error: {error}</p>
+          ) : !requests || requests.length === 0 ? ( // Added "!requests ||" to handle null
             <p>There are no signup requests.</p>
           ) : (
             <Table>

@@ -23,7 +23,7 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const response = await fetch("http://localhost:8080/announcements");
+        const response = await fetch("https://planning-server-ui10.onrender.com/announcements");
         if (response.ok) {
           const data = await response.json();
           setAnnouncements(data);
@@ -54,7 +54,7 @@ export default function AnnouncementsPage() {
       };
   
       try {
-        const response = await fetch("http://localhost:8080/announcements", {
+        const response = await fetch("https://planning-server-ui10.onrender.com/announcements", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
