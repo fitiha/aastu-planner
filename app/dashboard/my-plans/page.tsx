@@ -1,67 +1,121 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { PlanCard } from "@/components/plan-card"
-import { plans } from "@/lib/sample-data"
-import { Plus, AlertCircle, CheckCircle, Clock, Edit, Send } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlanCard } from "@/components/plan-card";
+import {
+  Plus,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Edit,
+  Send,
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function MyPlansPage() {
-  const router = useRouter()
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [userPlans, setUserPlans] = useState<any[]>([])
-  const [newPlans, setNewPlans] = useState<any[]>([])
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userPlans, setUserPlans] = useState<any[]>([]);
+  const [newPlans, setNewPlans] = useState<any[]>([]);
+  const [pendingPlans, setPendingPlans] = useState<any[]>([]);
+  const [approvedPlans, setApprovedPlans] = useState<any[]>([]);
+  const [rejectedPlans, setRejectedPlans] = useState<any[]>([]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser")
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser)
-      setCurrentUser(parsedUser)
-      const filteredPlans = plans.filter((plan) => plan.createdBy === parsedUser.id)
-      setUserPlans(filteredPlans)
-      const storedNewPlans = localStorage.getItem("newPlans")
-      if (storedNewPlans) {
-        setNewPlans(JSON.parse(storedNewPlans))
-      }
+    const storedUser = localStorage.getItem("currentUser");
+    const token = localStorage.getItem("token");
+    if (storedUser && token) {
+      const parsedUser = JSON.parse(storedUser);
+      setCurrentUser(parsedUser);
+
+      const fetchPlans = async (status: string) => {
+        const response = await fetch(
+          `https://planning-server-ui10.onrender.com/filter?status=${status}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        return data.plans;
+      };
+
+      const fetchAllPlans = async () => {
+        try {
+          const pending = await fetchPlans("Pending");
+          const approved = await fetchPlans("Approved");
+          const rejected = await fetchPlans("Rejected");
+      
+          // Ensure fallback values in case any response is null
+          setPendingPlans(pending || []);
+          setApprovedPlans(approved || []);
+          setRejectedPlans(rejected || []);
+
+          console.log("Pending Plans:", pending);
+          console.log("Approved Plans:", approved);
+          console.log("Rejected Plans:", rejected); 
+      
+          // Combine the plans safely
+          setUserPlans([...(pending || []), ...(approved || []), ...(rejected || [])]);
+        } catch (error) {
+          console.error("Error fetching plans:", error);
+          // Handle the error gracefully
+          setPendingPlans([]);
+          setApprovedPlans([]);
+          setRejectedPlans([]);
+          setUserPlans([]);
+        }
+      };
+      
+
+      fetchAllPlans();
     } else {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [router])
+  }, [router]);
 
   const handleCreatePlan = () => {
-    router.push("/dashboard/my-plans/new")
-  }
+    router.push("/dashboard/my-plans/new");
+  };
 
   const handleEditPlan = (planId: string, updatedPlan: any) => {
-    setUserPlans(userPlans.map((plan) => (plan.id === planId ? { ...plan, ...updatedPlan } : plan)))
-  }
+    setUserPlans(
+      userPlans.map((plan) =>
+        plan.id === planId ? { ...plan, ...updatedPlan } : plan
+      )
+    );
+  };
 
   const handleResubmitPlan = (planId: string) => {
-    setUserPlans(userPlans.map((plan) => (plan.id === planId ? { ...plan, status: "Pending Review" } : plan)))
-  }
+    setUserPlans(
+      userPlans.map((plan) =>
+        plan.id === planId ? { ...plan, status: "Pending Review" } : plan
+      )
+    );
+  };
 
   const handleEditNewPlan = (planId: string) => {
-    router.push(`/dashboard/my-plans/edit/${planId}`)
-  }
+    router.push(`/dashboard/my-plans/edit/${planId}`);
+  };
 
   const handleSendNewPlan = (planId: string) => {
-    const planToSend = newPlans.find((plan) => plan.id === planId)
+    const planToSend = newPlans.find((plan) => plan.id === planId);
     if (planToSend) {
-      setUserPlans([...userPlans, { ...planToSend, status: "Pending Review" }])
-      setNewPlans(newPlans.filter((plan) => plan.id !== planId))
-      localStorage.setItem("newPlans", JSON.stringify(newPlans.filter((plan) => plan.id !== planId)))
+      setUserPlans([...userPlans, { ...planToSend, status: "Pending Review" }]);
+      setNewPlans(newPlans.filter((plan) => plan.id !== planId));
+      localStorage.setItem(
+        "newPlans",
+        JSON.stringify(newPlans.filter((plan) => plan.id !== planId))
+      );
     }
-  }
+  };
 
-  if (!currentUser) return null
-
-  const pendingPlans = userPlans.filter((plan) => plan.status === "Pending Review")
-  const approvedPlans = userPlans.filter((plan) => plan.status === "Approved")
-  const rejectedPlans = userPlans.filter((plan) => plan.status === "Rejected")
+  if (!currentUser) return null;
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -74,24 +128,41 @@ export default function MyPlansPage() {
           />
           <h1 className="text-3xl font-bold text-[#1A237E]">My Plans</h1>
         </div>
-        <Button onClick={handleCreatePlan} className="bg-[#C49B1D] hover:bg-[#B38A1C] text-white">
+        <Button
+          onClick={handleCreatePlan}
+          className="bg-[#C49B1D] hover:bg-[#B38A1C] text-white"
+        >
           <Plus className="mr-2 h-4 w-4" /> Create New Plan
         </Button>
       </div>
 
       <Tabs defaultValue="your-plans" className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-gray-100">
-          <TabsTrigger value="your-plans" className="data-[state=active]:bg-gray-500 data-[state=active]:text-white">
-            <Edit className="mr-2 h-4 w-4" /> Your Plans ({newPlans.length})
+          <TabsTrigger
+            value="your-plans"
+            className="data-[state=active]:bg-gray-500 data-[state=active]:text-white"
+          >
+            <Edit className="mr-2 h-4 w-4" /> Your Plans ({userPlans.length})
           </TabsTrigger>
-          <TabsTrigger value="pending" className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white">
+          <TabsTrigger
+            value="pending"
+            className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white"
+          >
             <Clock className="mr-2 h-4 w-4" /> Pending ({pendingPlans.length})
           </TabsTrigger>
-          <TabsTrigger value="approved" className="data-[state=active]:bg-[#1A237E] data-[state=active]:text-white">
-            <CheckCircle className="mr-2 h-4 w-4" /> Approved ({approvedPlans.length})
+          <TabsTrigger
+            value="approved"
+            className="data-[state=active]:bg-[#1A237E] data-[state=active]:text-white"
+          >
+            <CheckCircle className="mr-2 h-4 w-4" /> Approved (
+            {approvedPlans.length})
           </TabsTrigger>
-          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            <AlertCircle className="mr-2 h-4 w-4" /> Rejected ({rejectedPlans.length})
+          <TabsTrigger
+            value="rejected"
+            className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
+          >
+            <AlertCircle className="mr-2 h-4 w-4" /> Rejected (
+            {rejectedPlans.length})
           </TabsTrigger>
         </TabsList>
 
@@ -103,17 +174,30 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {newPlans.map((plan) => (
-                    <div key={plan.id} className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
+                  {userPlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className="flex items-center justify-between bg-white p-4 rounded-lg shadow"
+                    >
                       <div>
                         <h3 className="font-semibold">{plan.name}</h3>
-                        <p className="text-sm text-gray-500">{plan.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {plan.description}
+                        </p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button onClick={() => handleEditNewPlan(plan.id)} variant="outline" size="sm">
+                        <Button
+                          onClick={() => handleEditNewPlan(plan.id)}
+                          variant="outline"
+                          size="sm"
+                        >
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </Button>
-                        <Button onClick={() => handleSendNewPlan(plan.id)} variant="default" size="sm">
+                        <Button
+                          onClick={() => handleSendNewPlan(plan.id)}
+                          variant="default"
+                          size="sm"
+                        >
                           <Send className="mr-2 h-4 w-4" /> Send
                         </Button>
                       </div>
@@ -133,9 +217,15 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {pendingPlans.map((plan) => (
-                    <PlanCard key={plan.id} plan={plan} />
-                  ))}
+                  {pendingPlans && pendingPlans.length > 0 ? (
+                    pendingPlans.map((plan) => (
+                      <PlanCard key={plan.id} plan={plan} />
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No pending plans available.
+                    </p>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -150,9 +240,15 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {approvedPlans.map((plan) => (
-                    <PlanCard key={plan.id} plan={plan} />
-                  ))}
+                  {approvedPlans && approvedPlans.length > 0 ? (
+                    approvedPlans.map((plan) => (
+                      <PlanCard key={plan.id} plan={plan} />
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No approved plans available.
+                    </p>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -167,9 +263,20 @@ export default function MyPlansPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {rejectedPlans.map((plan) => (
-                    <PlanCard key={plan.id} plan={plan} onEdit={handleEditPlan} onResubmit={handleResubmitPlan} />
-                  ))}
+                  {rejectedPlans && rejectedPlans.length > 0 ? (
+                    rejectedPlans.map((plan) => (
+                      <PlanCard
+                        key={plan.id}
+                        plan={plan}
+                        onEdit={handleEditPlan}
+                        onResubmit={handleResubmitPlan}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No rejected plans available.
+                    </p>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -177,6 +284,5 @@ export default function MyPlansPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

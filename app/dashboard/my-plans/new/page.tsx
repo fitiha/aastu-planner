@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { plans, users, pillars } from "@/lib/sample-data"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { pillars } from "@/lib/sample-data";
 
 export default function NewPlanPage() {
-  const router = useRouter()
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [superiorPlans, setSuperiorPlans] = useState<any[]>([])
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [superiorPlans, setSuperiorPlans] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -23,49 +29,73 @@ export default function NewPlanPage() {
     startDate: "",
     endDate: "",
     planType: "yearly",
-  })
+  });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser")
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser)
-      setCurrentUser(parsedUser)
-      const superior = users.find((u) => u.id === parsedUser.superior)
-      if (superior) {
-        const superiorPlans = plans.filter((p) => p.createdBy === superior.id && p.status === "Approved")
-        setSuperiorPlans(superiorPlans)
-      }
+    const storedUser = localStorage.getItem("currentUser");
+    const token = localStorage.getItem("token");
+    if (storedUser && token) {
+      const parsedUser = JSON.parse(storedUser);
+      setCurrentUser(parsedUser);
+      fetch("https://planning-server-ui10.onrender.com/plans/title", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setSuperiorPlans(data.titles);
+          console.log(data);
+        })
+        .catch((error) =>
+          console.error("Error fetching superior plans:", error)
+        );
     } else {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [router])
+  }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    const token = localStorage.getItem("token");
     const newPlan = {
-      id: `P${Date.now()}`,
-      ...formData,
-      createdBy: currentUser.id,
-      targetValue: 100,
-      currentValue: 0,
-    }
-    const storedNewPlans = localStorage.getItem("newPlans")
-    const newPlans = storedNewPlans ? JSON.parse(storedNewPlans) : []
-    newPlans.push(newPlan)
-    localStorage.setItem("newPlans", JSON.stringify(newPlans))
-    router.push("/dashboard/my-plans")
-  }
+      title: formData.name,
+      description: formData.description,
+      which_quarter: formData.targetQuarter,
+      superior_plan: formData.alignedPlanId,
+      aligned_pillary: formData.pillarId,
+      type: "plan",
+      start_date: new Date(formData.startDate).toISOString(),
+      end_date: new Date(formData.endDate).toISOString(),
+      value: parseInt(formData.accomplishmentValue),
+    };
+    fetch("https://planning-server-ui10.onrender.com/summit/plan", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(newPlan),
+    })
+      .then((response) => response.json())
+      .then(() => {
+        router.push("/dashboard/my-plans");
+      })
+      .catch((error) => console.error("Error submitting new plan:", error));
+  };
 
-  if (!currentUser) return null
+  if (!currentUser) return null;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -76,7 +106,13 @@ export default function NewPlanPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="name">Plan Name</label>
-            <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div className="space-y-2">
             <label htmlFor="description">Description</label>
@@ -90,7 +126,11 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="pillarId">Aligned Pillar</label>
-            <Select name="pillarId" onValueChange={(value) => handleSelectChange("pillarId", value)} required>
+            <Select
+              name="pillarId"
+              onValueChange={(value) => handleSelectChange("pillarId", value)}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a pillar" />
               </SelectTrigger>
@@ -105,21 +145,29 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="alignedPlanId">Aligned Superior Plan</label>
-            <Select name="alignedPlanId" onValueChange={(value) => handleSelectChange("alignedPlanId", value)} required>
+            <Select
+              name="alignedPlanId"
+              onValueChange={(value) =>
+                handleSelectChange("alignedPlanId", value)
+              }
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a superior plan" />
               </SelectTrigger>
               <SelectContent>
                 {superiorPlans.map((plan) => (
-                  <SelectItem key={plan.id} value={plan.id}>
-                    {plan.name}
+                  <SelectItem key={plan} value={plan}>
+                    {plan}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </SelectContent> 
+            </Select> 
           </div>
           <div className="space-y-2">
-            <label htmlFor="accomplishmentValue">Value of Full Accomplishment</label>
+            <label htmlFor="accomplishmentValue">
+              Value of Full Accomplishment
+            </label>
             <Input
               id="accomplishmentValue"
               name="accomplishmentValue"
@@ -129,8 +177,16 @@ export default function NewPlanPage() {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="targetQuarter">Planned Quarter for Implementation</label>
-            <Select name="targetQuarter" onValueChange={(value) => handleSelectChange("targetQuarter", value)} required>
+            <label htmlFor="targetQuarter">
+              Planned Quarter for Implementation
+            </label>
+            <Select
+              name="targetQuarter"
+              onValueChange={(value) =>
+                handleSelectChange("targetQuarter", value)
+              }
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a quarter" />
               </SelectTrigger>
@@ -166,7 +222,11 @@ export default function NewPlanPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="planType">Plan Type</label>
-            <Select name="planType" onValueChange={(value) => handleSelectChange("planType", value)} required>
+            <Select
+              name="planType"
+              onValueChange={(value) => handleSelectChange("planType", value)}
+              required
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select plan type" />
               </SelectTrigger>
@@ -181,6 +241,5 @@ export default function NewPlanPage() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
-

@@ -7,7 +7,7 @@ import { Notifications } from '@/components/notifications'
 
 interface User {
   id: string;
-  first_name: string;
+  full_name: string;
   email: string;
   role: string;
 }
@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
         <div className="absolute bottom-0 left-0 w-full p-4 bg-gray-900">
           <Link href="/dashboard/profile" className="block mb-2 text-sm hover:underline">
-            {user.first_name}
+            {user.full_name}
           </Link>
           <p className="text-sm text-gray-400">{user.role}</p>
           <button onClick={handleLogout} className="my-4 text-sm bg-red-700 hover:bg-red-600 text-white px-16 py-2 rounded-xl">
