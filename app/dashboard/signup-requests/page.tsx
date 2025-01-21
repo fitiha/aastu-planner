@@ -1,11 +1,17 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { signupRequests, pendingUsers, users } from '@/lib/sample-data'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface SignupRequest {
   id: string;
@@ -15,8 +21,8 @@ interface SignupRequest {
 }
 
 interface PendingUser {
-  id: string;
-  name: string;
+  _id: string;
+  full_name: string;
   email: string;
   role: string;
   superior: string;
@@ -24,85 +30,152 @@ interface PendingUser {
 }
 
 export default function SignupRequestsPage() {
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [requests, setRequests] = useState<SignupRequest[]>([])
-  const router = useRouter()
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [requests, setRequests] = useState<PendingUser[] | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser')
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser)
-      setCurrentUser(parsedUser)
-      // Filter requests for the current user
-      const userRequests = signupRequests.filter(req => req.superiorId === parsedUser.id)
-      setRequests(userRequests)
-    } else {
-      router.push('/login')
+    const fetchRequests = async () => {
+      const storedUser = localStorage.getItem("currentUser");
+      const token = localStorage.getItem("token");
+      if (storedUser && token) {
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentUser(parsedUser);
+        try {
+          const response = await fetch(
+            "https://planning-server-ui10.onrender.com/users/unverified",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const data = await response.json();
+          setRequests(data.length ? data : []);
+        } catch (error) {
+          console.error("Failed to fetch requests:", error);
+          setRequests([]);
+        }
+      } else {
+        router.push("/login");
+      }
+    };
+    fetchRequests();
+  }, [router]);
+
+  const handleApprove = async (userId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        "https://planning-server-ui10.onrender.com/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to approve request");
+      }
+
+      setRequests(requests?.filter((req) => req._id !== userId) || null);
+    } catch (error) {
+      console.error("Failed to approve request:", error);
     }
-  }, [router])
+  };
 
-  const handleApprove = (requestId: string) => {
-    // TODO: Implement approval logic
-    console.log('Approving request:', requestId)
-    setRequests(requests.filter(req => req.id !== requestId))
-  }
+  const handleDecline = async (userId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const handleDecline = (requestId: string) => {
-    // TODO: Implement decline logic
-    console.log('Declining request:', requestId)
-    setRequests(requests.filter(req => req.id !== requestId))
-  }
+    try {
+      const response = await fetch(
+        "https://planning-server-ui10.onrender.com/reject",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
 
-  if (!currentUser) return null
+      if (!response.ok) {
+        throw new Error("Failed to decline request");
+      }
+
+      setRequests(requests?.filter((req) => req._id !== userId) || null);
+    } catch (error) {
+      console.error("Failed to decline request:", error);
+    }
+  };
+
+  if (!currentUser) return null;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-          <img 
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
-            alt="AASTU Logo" 
-            className="h-32 w-auto rounded-full"
+        <img
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg"
+          alt="AASTU Logo"
+          className="h-32 w-auto rounded-full"
+        />
+        <h1 className="text-3xl font-bold text-[#1A237E]">Signup Requests</h1>
+      </div>
 
-          />
-          <h1 className="text-3xl font-bold text-[#1A237E]">Signup Requests</h1>
-        </div>
-      
       <Card>
         <CardHeader>
-          <CardTitle className='text-[#1A237E]'>Pending Requests</CardTitle>
+          <CardTitle className="text-[#1A237E]">Pending Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='text-[#1A237E]'>Name</TableHead>
-                <TableHead className='text-[#1A237E]'>Email</TableHead>
-                <TableHead className='text-[#1A237E]'>Role</TableHead>
-                <TableHead className='text-[#1A237E]'>Request Date</TableHead>
-                <TableHead className='text-[#1A237E]'>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {requests.map((request) => {
-                const pendingUser = pendingUsers.find(user => user.id === request.userId) as PendingUser
-                return (
-                  <TableRow key={request.id}>
-                    <TableCell>{pendingUser.name}</TableCell>
-                    <TableCell>{pendingUser.email}</TableCell>
-                    <TableCell>{pendingUser.role}</TableCell>
-                    <TableCell>{request.requestDate}</TableCell>
+          {requests === null ? (
+            <p>Loading...</p>
+          ) : requests.length === 0 ? (
+            <p>There are no signup requests.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-[#1A237E]">Name</TableHead>
+                  <TableHead className="text-[#1A237E]">Email</TableHead>
+                  <TableHead className="text-[#1A237E]">Role</TableHead>
+                  <TableHead className="text-[#1A237E]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {requests.map((request) => (
+                  <TableRow key={request._id}>
+                    <TableCell>{request.full_name}</TableCell>
+                    <TableCell>{request.email}</TableCell>
+                    <TableCell>{request.role}</TableCell>
                     <TableCell>
-                      <Button onClick={() => handleApprove(request.id)} className="mr-2 bg-[#1A237E] text-white">Approve</Button>
-                      <Button onClick={() => handleDecline(request.id)} variant="destructive">Decline</Button>
+                      <Button
+                        onClick={() => handleApprove(request._id)}
+                        className="mr-2 bg-[#1A237E] text-white"
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => handleDecline(request._id)}
+                        variant="destructive"
+                      >
+                        Decline
+                      </Button>
                     </TableCell>
                   </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

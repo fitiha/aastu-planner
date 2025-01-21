@@ -22,6 +22,7 @@ export default function SignupPage() {
         const response = await fetch(`https://planning-server-ui10.onrender.com/hierarchy?role=${role}`)
         const data = await response.json()
         const superiors = data.superiors.map((sup: any) => ({ id: sup._id, name: sup.full_name }))
+        console.log(superiors)
         setAvailableSuperiors(superiors)
       }
     }
@@ -119,7 +120,7 @@ export default function SignupPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {availableSuperiors.map((sup) => (
-                      <SelectItem key={sup.id} value={sup.id}>{sup.name}</SelectItem>
+                      <SelectItem key={sup.id} value={sup.name}>{sup.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
