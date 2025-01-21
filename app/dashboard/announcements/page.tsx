@@ -1,74 +1,97 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Announcement {
-  id: number
-  title: string
-  content: string
-  date: string
+  id: number;
+  title: string;
+  content: string;
+  date: string;
 }
 
-// This would typically come from an API
-const sampleAnnouncements: Announcement[] = [
-  {
-    id: 1,
-    title: "New Strategic Plan",
-    content:
-      "The university has launched a new 5-year strategic plan. All departments are required to align their goals accordingly.",
-    date: "2023-05-15",
-  },
-  {
-    id: 2,
-    title: "Upcoming Board Meeting",
-    content: "The next board meeting is scheduled for June 15th. Please submit all required reports by June 1st.",
-    date: "2023-05-10",
-  },
-  {
-    id: 3,
-    title: "Research Grant Opportunity",
-    content: "A new research grant opportunity has been announced. Deadline for submissions is July 31st.",
-    date: "2023-05-05",
-  },
-]
-
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(sampleAnnouncements)
-  const [newAnnouncement, setNewAnnouncement] = useState("")
-  const [newAnnouncementContent, setNewAnnouncementContent] = useState("")
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [newAnnouncement, setNewAnnouncement] = useState("");
+  const [newAnnouncementContent, setNewAnnouncementContent] = useState("");
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser")
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/announcements");
+        if (response.ok) {
+          const data = await response.json();
+          setAnnouncements(data);
+        } else {
+          console.error("Failed to fetch announcements");
+        }
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      }
+    };
+
+    // Fetch announcements from API
+    fetchAnnouncements();
+
+    // Load the current user from localStorage
+    const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser))
+      setCurrentUser(JSON.parse(storedUser));
     }
-  }, [])
+  }, []);
 
-  const handleAddAnnouncement = () => {
+  const handleAddAnnouncement = async () => {
     if (newAnnouncement.trim() !== "" && newAnnouncementContent.trim() !== "") {
-      setAnnouncements([
-        ...announcements,
-        {
-          id: announcements.length + 1,
-          title: newAnnouncement,
-          content: newAnnouncementContent,
-          date: new Date().toISOString().split("T")[0],
-        },
-      ])
-      setNewAnnouncement("")
-      setNewAnnouncementContent("")
+      const newEntry = {
+        title: newAnnouncement,
+        description: newAnnouncementContent,
+        created_time: new Date().toISOString(),
+      };
+  
+      try {
+        const response = await fetch("http://localhost:8080/announcements", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newEntry),
+        });
+  
+        if (response.ok) {
+          const createdAnnouncement = await response.json();
+          setAnnouncements((prev) => [
+            ...prev,
+            {
+              id: createdAnnouncement.id,
+              title: createdAnnouncement.title,
+              content: createdAnnouncement.description, // Map description to content
+              date: new Date(createdAnnouncement.created_time).toISOString().split("T")[0],
+            },
+          ]);
+  
+          // Clear the input fields
+          setNewAnnouncement("");
+          setNewAnnouncementContent("");
+        } else {
+          console.error("Failed to publish new announcement");
+        }
+      } catch (error) {
+        console.error("Error publishing announcement:", error);
+      }
     }
-  }
+  };
+  
 
-  const handleDeleteAnnouncement = (id: number) => {
-    setAnnouncements(announcements.filter((announcement) => announcement.id !== id))
-  }
+  const handleDeleteAnnouncement = async (id: number) => {
+    const updatedAnnouncements = announcements.filter((announcement) => announcement.id !== id);
+    setAnnouncements(updatedAnnouncements);
+    // Add delete API call if needed in the future
+  };
 
   return (
     <div className="container mx-auto py-8 flex flex-col h-[calc(100vh-4rem)]">
@@ -135,6 +158,5 @@ export default function AnnouncementsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
-
