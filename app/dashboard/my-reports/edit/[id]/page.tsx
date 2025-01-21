@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { plans } from "@/lib/sample-data"
 
-export default function NewReportPage() {
+export default function EditReportPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [userPlans, setUserPlans] = useState<any[]>([])
@@ -27,10 +27,23 @@ export default function NewReportPage() {
       setCurrentUser(parsedUser)
       const filteredPlans = plans.filter((plan) => plan.createdBy === parsedUser.id && plan.status === "Approved")
       setUserPlans(filteredPlans)
+
+      // Fetch the report to edit
+      const storedNewReports = localStorage.getItem("newReports")
+      if (storedNewReports) {
+        const newReports = JSON.parse(storedNewReports)
+        const reportToEdit = newReports.find((report: any) => report.id === params.id)
+        if (reportToEdit) {
+          setFormData(reportToEdit)
+          setSelectedPlan(filteredPlans.find((plan) => plan.id === reportToEdit.planId))
+        } else {
+          router.push("/dashboard/my-reports")
+        }
+      }
     } else {
       router.push("/login")
     }
-  }, [router])
+  }, [router, params.id])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -45,26 +58,17 @@ export default function NewReportPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const newReport = {
-      id: `R${Date.now()}`,
-      ...formData,
-      accomplishedValue: Number(formData.accomplishedValue),
-      submissionDate: new Date().toISOString().split("T")[0],
-      submittedBy: currentUser.id,
-      quarter: getCurrentQuarter(),
-      completion: 0,
-      comments: "",
-    }
     const storedNewReports = localStorage.getItem("newReports")
-    const newReports = storedNewReports ? JSON.parse(storedNewReports) : []
-    newReports.push(newReport)
-    localStorage.setItem("newReports", JSON.stringify(newReports))
+    if (storedNewReports) {
+      const newReports = JSON.parse(storedNewReports)
+      const updatedReports = newReports.map((report: any) =>
+        report.id === params.id
+          ? { ...report, ...formData, accomplishedValue: Number(formData.accomplishedValue) }
+          : report,
+      )
+      localStorage.setItem("newReports", JSON.stringify(updatedReports))
+    }
     router.push("/dashboard/my-reports")
-  }
-
-  const getCurrentQuarter = () => {
-    const month = new Date().getMonth()
-    return `Q${Math.floor(month / 3) + 1}`
   }
 
   if (!currentUser) return null
@@ -72,13 +76,13 @@ export default function NewReportPage() {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Create New Report</CardTitle>
+        <CardTitle>Edit Report</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="planId">Select Plan</label>
-            <Select onValueChange={handlePlanSelect} required>
+            <Select onValueChange={handlePlanSelect} value={formData.planId} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select a plan" />
               </SelectTrigger>
@@ -110,7 +114,7 @@ export default function NewReportPage() {
             <label htmlFor="notes">Report Details</label>
             <Textarea id="notes" name="notes" value={formData.notes} onChange={handleInputChange} required />
           </div>
-          <Button type="submit">Save Report</Button>
+          <Button type="submit">Update Report</Button>
         </form>
       </CardContent>
     </Card>
