@@ -15,16 +15,40 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const activeUser = users.find(u => u.email === email && u.password === password)
-    const pendingUser = pendingUsers.find(u => u.email === email && u.password === password)
-
-    if (activeUser) {
-      localStorage.setItem('currentUser', JSON.stringify(activeUser))
-      router.push('/dashboard')
-    } else if (pendingUser) {
-      router.push('/pending-approval')
-    } else {
-      setError('Invalid email or password')
+    setError('') // Clear any previous errors
+  
+    try {
+      const response = await fetch('https://planning-server-ui10.onrender.com/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+  
+      if (!response.ok) {
+        throw new Error('Invalid email or password')
+      }
+  
+      const data = await response.json()
+      const { token } = data
+  
+      // Decode the token to get user information (optional)
+      const user = JSON.parse(atob(token.split('.')[1]))
+      console.log(user)
+  
+      localStorage.setItem('token', token)
+      localStorage.setItem('currentUser', JSON.stringify(user))
+  
+      if (user.status===true) {
+        router.push('/dashboard')
+      } else if (user.status===true) {
+        router.push('/pending-approval')
+      } else {
+        setError('Invalid user role')
+      }
+    } catch (error) {
+      setError(error.message)
     }
   }
 
