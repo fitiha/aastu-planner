@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion"
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,12 @@ export default function SignupRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5 },
+  }
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -130,16 +137,18 @@ export default function SignupRequestsPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <img
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg"
-          alt="AASTU Logo"
-          className="h-32 w-auto rounded-full"
-        />
-        <h1 className="text-3xl font-bold text-[#1A237E]">Signup Requests</h1>
-      </div>
-
+    <div className="container mx-auto py-8 space-y-8 bg-gradient-to-b rounded-xl from-blue-100 to-white transition-all duration-300 ease-in-out">
+      <motion.div
+        className="flex items-center gap-3 mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.h1 className="text-3xl font-bold text-[#1A237E] px-4" {...fadeInUp}>
+        Signup Requests
+        </motion.h1>
+      </motion.div>
+      <motion.div {...fadeInUp}>
       <Card>
         <CardHeader>
           <CardTitle className="text-[#1A237E]">Pending Requests</CardTitle>
@@ -188,6 +197,7 @@ export default function SignupRequestsPage() {
           )}
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }
