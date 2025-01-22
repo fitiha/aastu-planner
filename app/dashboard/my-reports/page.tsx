@@ -197,7 +197,7 @@ export default function MyReportsPage() {
                 <div className="space-y-4">
                   {pendingReports.map((report) => (
                     <div key={report.id} className="relative">
-                      <ReportCard report={report} plan={userPlans.find((p) => p.id === report.planId)} />
+                      <ReportCard report={report} plan={userPlans.find((p) => p.plan_id === report.plan_id)} />
                       <div className="absolute top-2 right-2 flex space-x-2">
                         <Button
                           size="sm"
@@ -233,7 +233,7 @@ export default function MyReportsPage() {
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
                   {approvedReports.map((report) => (
-                    <ReportCard key={report.id} report={report} plan={userPlans.find((p) => p.id === report.planId)} />
+                    <ReportCard key={report.id} report={report} plan={userPlans.find((p) => p.plan_id === report.plan_id)} />
                   ))}
                 </div>
               </ScrollArea>

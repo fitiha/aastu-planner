@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Progress } from "@/components/ui/progress";
 import { PlanStatusChart } from "./components/plan-status-chart";
 import { UniversityProgressChart } from "./components/university-progress-chart";
@@ -9,7 +10,11 @@ import { ReportSubmissionChart } from "./components/report-submission-chart";
 import { PlanReportTable } from "./components/plan-report-table";
 
 export default function DashboardPage() {
-  // This data would typically come from an API or database
+  const router = useRouter();
+  const [pendingPlans, setPendingPlans] = useState<any[]>([]);
+  const [approvedPlans, setApprovedPlans] = useState<any[]>([]);
+  const [rejectedPlans, setRejectedPlans] = useState<any[]>([]);
+  const [userPlans, setUserPlans] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const storedUser = localStorage.getItem("currentUser");
   useEffect(() => {
@@ -18,14 +23,71 @@ export default function DashboardPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("currentUser");
+    const token = localStorage.getItem("token");
+    if (storedUser && token) {
+      const parsedUser = JSON.parse(storedUser);
+      setCurrentUser(parsedUser);
+
+      const fetchPlans = async (status: string) => {
+        const response = await fetch(
+          `https://planning-server-ui10.onrender.com/filter?status=${status}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        return data.plans;
+      };
+
+      const fetchAllPlans = async () => {
+        try {
+          const pending = await fetchPlans("Pending");
+          const approved = await fetchPlans("Approved");
+          const rejected = await fetchPlans("Rejected");
+
+          // Ensure fallback values in case any response is null
+          setPendingPlans(pending || []);
+          setApprovedPlans(approved || []);
+          setRejectedPlans(rejected || []);
+
+          console.log("Pending Plans:", pending);
+          console.log("Approved Plans:", approved);
+          console.log("Rejected Plans:", rejected);
+
+          // Combine the plans safely
+          setUserPlans([
+            ...(pending || []),
+            ...(approved || []),
+            ...(rejected || []),
+          ]);
+        } catch (error) {
+          console.error("Error fetching plans:", error);
+          // Handle the error gracefully
+          setPendingPlans([]);
+          setApprovedPlans([]);
+          setRejectedPlans([]);
+          setUserPlans([]);
+        }
+      };
+
+      fetchAllPlans();
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
+
   const dashboardData = {
-    totalPlans: 3,
-    completedReports: 2,
-    overallProgress: 72,
+    totalPlans: userPlans.length,
+    completedReports: approvedPlans.length,
+    overallProgress: (approvedPlans.length/userPlans.length) * 100,
     planStatusDistribution: [
-      { name: "Completed", value: 60 },
-      { name: "In Progress", value: 45 },
-      { name: "Not Started", value: 15 },
+      { name: "Completed", value: approvedPlans.length },
+      { name: "In Progress", value: pendingPlans.length },
+      { name: "Not Started", value: 0 },
     ],
     quarterlyReportStatus: [
       { name: "Q1", submitted: 30, pending: 0 },
