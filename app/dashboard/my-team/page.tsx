@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { TeamMemberCard } from '@/components/team-member-card'
-import { users, plans, reports } from '@/lib/sample-data'
-import { Users, UserPlus, ClipboardList, FileText } from 'lucide-react'
+import { Users, ClipboardList, FileText } from 'lucide-react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function MyTeamPage() {
@@ -15,45 +13,72 @@ export default function MyTeamPage() {
   const [teamStats, setTeamStats] = useState({
     totalMembers: 0,
     totalPendingPlans: 0,
-    totalPendingReports: 0
+    totalPendingReports: 0,
   })
   const router = useRouter()
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser')
-    if (storedUser) {
+    const fetchTeamData = async () => {
+      const storedUser = localStorage.getItem('currentUser')
+      const token = localStorage.getItem('token')
+
+      if (!storedUser || !token) {
+        router.push('/login')
+        return
+      }
+
       const parsedUser = JSON.parse(storedUser)
       setCurrentUser(parsedUser)
-      if (parsedUser.role !== 'staff') {
-        const subordinates = users.filter(u => u.superior === parsedUser.id)
+
+      if (parsedUser.role === 'staff') {
+        router.push('/dashboard')
+        return
+      }
+
+      try {
+        // Fetch subordinates
+        const subordinatesRes = await fetch('https://planning-server-ui10.onrender.com/users/subordinates', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const subordinatesData = await subordinatesRes.json()
+        const subordinates = subordinatesData.users
+
+        console.log("subbor is", subordinates)
+
         setTeamMembers(subordinates)
-        
-        // Calculate team statistics
-        const totalPendingPlans = plans.filter(p => 
-          subordinates.some(s => s.id === p.createdBy) && p.status === 'Pending Review'
-        ).length
-        
-        const totalPendingReports = reports.filter(r => 
-          subordinates.some(s => s.id === r.submittedBy) && r.status === 'Pending Review'
-        ).length
+
+        // Fetch pending plans and reports count
+        const fetchCounts = async (type: string) => {
+          const res = await fetch(`https://planning-server-ui10.onrender.com/plan-and-report/count?type=${type}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          const data = await res.json()
+          return data.count
+        }
+
+        const totalPendingPlans = await fetchCounts('plan')
+        const totalPendingReports = await fetchCounts('report')
 
         setTeamStats({
           totalMembers: subordinates.length,
           totalPendingPlans,
-          totalPendingReports
+          totalPendingReports,
         })
-      } else {
-        router.push('/dashboard')
+      } catch (error) {
+        console.error('Error fetching team data:', error)
       }
-    } else {
-      router.push('/login')
     }
+
+    fetchTeamData()
   }, [router])
 
   const getPendingItemsCount = (memberId: string) => {
-    const pendingPlans = plans.filter(p => p.createdBy === memberId && p.status === 'Pending Review').length
-    const pendingReports = reports.filter(r => r.submittedBy === memberId && r.status === 'Pending Review').length
-    return pendingPlans + pendingReports
+    // Filter pending items for individual members if needed
+    return 0
   }
 
   if (!currentUser || currentUser.role === 'staff') {
@@ -67,7 +92,6 @@ export default function MyTeamPage() {
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aastu.jpg-oDwUB2nTEh9lUbV13ex90FkBNCbmJx.jpeg" 
           alt="AASTU Logo" 
           className="h-32 w-auto rounded-full"
-
         />
         <h1 className="text-3xl font-bold text-[#1A237E]">My Team</h1>
       </div>
@@ -124,10 +148,10 @@ export default function MyTeamPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teamMembers.map((member) => (
                 <TeamMemberCard
-                  key={member.id}
+                  key={member._id}
                   member={member}
-                  pendingItems={getPendingItemsCount(member.id)}
-                  onClick={() => router.push(`/dashboard/my-team/${member.id}`)}
+                  pendingItems={getPendingItemsCount(member._id)}
+                  onClick={() => router.push(`/dashboard/my-team/${member._id}`)}
                 />
               ))}
             </div>
@@ -137,4 +161,3 @@ export default function MyTeamPage() {
     </div>
   )
 }
-

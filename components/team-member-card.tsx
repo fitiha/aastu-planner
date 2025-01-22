@@ -20,9 +20,9 @@ export function TeamMemberCard({ member, pendingItems, onClick }: TeamMemberCard
             </div>
             <div>
               <h3 className="font-semibold text-[#1A237E] group-hover:text-[#2A337E]">
-                {member.name}
+                { member.full_name}
               </h3>
-              <p className="text-sm text-gray-500">{member.position}</p>
+              <p className="text-sm text-gray-500">{member.role}</p>
               {pendingItems > 0 && (
                 <Badge 
                   className="mt-2 bg-[#C49B1D] hover:bg-[#B38A1C]"

@@ -52,7 +52,7 @@ export function PlanCard({ plan, onEdit, onResubmit }: PlanCardProps) {
       if (!token) {
         throw new Error('Authentication token not found')
       }
-      console.log("plan id is", plan.plan_id)
+      // console.log("plan id is", plan.plan_id)
       const response = await fetch(`https://planning-server-ui10.onrender.com/update/plan/${plan.plan_id}`, {
         method: 'PUT',
         headers: {
@@ -60,8 +60,8 @@ export function PlanCard({ plan, onEdit, onResubmit }: PlanCardProps) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...plan, // Keep the existing plan details
-          status: 'Pending', // Update the status to 'Pending'
+          ...plan, 
+          status: 'Pending', 
         }),
       })
 

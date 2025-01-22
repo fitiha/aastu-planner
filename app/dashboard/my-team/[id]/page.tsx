@@ -12,6 +12,7 @@ import { users, plans, reports } from '@/lib/sample-data'
 export default function TeamMemberDetailsPage() {
   const router = useRouter()
   const params = useParams()
+  console.log("params", params.id)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [teamMember, setTeamMember] = useState<any>(null)
   const [memberPlans, setMemberPlans] = useState<any[]>([])
@@ -23,7 +24,8 @@ export default function TeamMemberDetailsPage() {
       const parsedUser = JSON.parse(storedUser)
       setCurrentUser(parsedUser)
       
-      const member = users.find(u => u.id === params.id)
+      const member = localStorage.currentUser;
+      console.log("current member is", member);
       setTeamMember(member)
 
       if (member) {

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ReportCard } from "@/components/report-card"
-import { reports, plans } from "@/lib/sample-data"
 import { Pencil, Trash2, Plus, AlertCircle, CheckCircle, Clock, Edit, Send } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -15,21 +14,71 @@ export default function MyReportsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [userReports, setUserReports] = useState<any[]>([])
   const [newReports, setNewReports] = useState<any[]>([])
+  const [pendingReports, setPendingReports] = useState<any[]>([])
+  const [approvedReports, setApprovedReports] = useState<any[]>([])
+  const [rejectedReports, setRejectedReports] = useState<any[]>([])
   const [userPlans, setUserPlans] = useState<any[]>([])
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser")
-    if (storedUser) {
+    const token = localStorage.getItem("token")
+    if (storedUser && token) {
       const parsedUser = JSON.parse(storedUser)
       setCurrentUser(parsedUser)
-      const filteredReports = reports.filter((report) => report.submittedBy === parsedUser.id)
-      setUserReports(filteredReports)
-      const filteredPlans = plans.filter((plan) => plan.createdBy === parsedUser.id)
-      setUserPlans(filteredPlans)
-      const storedNewReports = localStorage.getItem("newReports")
-      if (storedNewReports) {
-        setNewReports(JSON.parse(storedNewReports))
+
+      const fetchReports = async (status: string) => {
+        const response = await fetch(
+          `https://planning-server-ui10.onrender.com/report/filter?status=${status}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        const data = await response.json()
+        return data.reports
       }
+
+      const fetchPlans = async () => {
+        const response = await fetch("https://planning-server-ui10.onrender.com/plan/titles", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json()
+        console.log("abcdefgh plan", data)
+        setUserPlans(data.plans)
+      }
+
+      const fetchAllReports = async () => {
+        try {
+          const pending = await fetchReports("Pending")
+          const approved = await fetchReports("Approved")
+          const rejected = await fetchReports("Rejected")
+
+          setPendingReports(pending || [])
+          setApprovedReports(approved || [])
+          setRejectedReports(rejected || [])
+          const allReports = [...(pending || []), ...(approved || []), ...(rejected || [])]
+          console.log("All Reports:", allReports)
+          setUserReports(allReports)
+
+          // console.log("Pending Reports:", pending)
+          // console.log("Approved Reports:", approved)
+          // console.log("Rejected Reports:", rejected)
+          // console.log("User Reports:", allReports)
+
+        } catch (error) {
+          console.error("Error fetching reports:", error)
+          setPendingReports([])
+          setApprovedReports([])
+          setRejectedReports([])
+          setUserReports([])
+        }
+      }
+
+      fetchPlans()
+      fetchAllReports()
     } else {
       router.push("/login")
     }
@@ -69,10 +118,6 @@ export default function MyReportsPage() {
 
   if (!currentUser) return null
 
-  const pendingReports = userReports.filter((report) => report.status === "Pending Review")
-  const approvedReports = userReports.filter((report) => report.status === "Approved")
-  const rejectedReports = userReports.filter((report) => report.status === "Rejected")
-
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex justify-between items-center">
@@ -92,7 +137,7 @@ export default function MyReportsPage() {
       <Tabs defaultValue="your-reports" className="w-full">
         <TabsList className="grid w-full grid-cols-4 bg-gray-100">
           <TabsTrigger value="your-reports" className="data-[state=active]:bg-gray-500 data-[state=active]:text-white">
-            <Edit className="mr-2 h-4 w-4" /> Your Reports ({newReports.length})
+            <Edit className="mr-2 h-4 w-4" /> Your Reports ({userReports.length})
           </TabsTrigger>
           <TabsTrigger value="pending" className="data-[state=active]:bg-[#C49B1D] data-[state=active]:text-white">
             <Clock className="mr-2 h-4 w-4" /> Pending ({pendingReports.length})
@@ -113,9 +158,9 @@ export default function MyReportsPage() {
             <CardContent className="p-6">
               <ScrollArea className="h-[60vh]">
                 <div className="space-y-4">
-                  {newReports.map((report) => (
+                  {userReports.map((report) => (
                     <div key={report.id} className="relative">
-                      <ReportCard report={report} plan={userPlans.find((p) => p.id === report.planId)} />
+                      <ReportCard report={report} plan={userPlans.find((p) => p.plan_id === report.plan_id)} />
                       <div className="absolute top-2 right-2 flex space-x-2">
                         <Button
                           size="sm"
@@ -222,4 +267,3 @@ export default function MyReportsPage() {
     </div>
   )
 }
-
